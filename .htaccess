@@ -1,0 +1,10 @@
+# Shared-hosting front door: the domain's document root is this folder
+# (public_html/), but Laravel's front controller lives in public/. Forward every
+# request into public/, where index.php and public/.htaccess take over.
+#
+# Committed on purpose so the Git deployment can't leave the site without it.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
