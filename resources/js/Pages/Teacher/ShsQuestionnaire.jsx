@@ -2,6 +2,7 @@ import { Head, useForm, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle2, FileText, Plus, Send, Trash2 } from 'lucide-react';
 import TeacherLayout from '@/Layouts/TeacherLayout';
+import PageHeader from '@/Components/Teacher/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ToastContainer, toast } from 'react-toastify';
@@ -144,56 +145,54 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
 
     const scale = current?.type === 'challenges' ? challenges.scale : performance.scale;
 
+    const inputClass =
+        'w-full h-11 rounded-[10px] border border-border px-3 text-sm focus:border-green-600 focus:ring-2 focus:ring-yellow-300 disabled:bg-[hsl(var(--canvas))] read-only:bg-[hsl(var(--canvas))]';
+
     return (
         <TeacherLayout user={user}>
             <Head title="SHS Performance & Challenges Questionnaire" />
             <ToastContainer position="top-right" />
 
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
-                <div className="max-w-5xl mx-auto">
-                    <Link
-                        href={route('teacher.ipcrf')}
-                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mb-6"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to IPCRF Tool
-                    </Link>
-
-                    {/* Header */}
-                    <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border-2 border-blue-200">
-                        <div className="text-center mb-6">
-                            <FileText className="h-14 w-14 text-blue-600 mx-auto mb-3" />
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{template.title}</h1>
-                            {template.description && (
-                                <p className="text-gray-600 mt-2">{template.description}</p>
-                            )}
-                            <p className="text-gray-500 mt-1 text-sm">School Year: {schoolYear}</p>
+            <div className="min-h-screen bg-[hsl(var(--canvas))] text-foreground">
+                <PageHeader
+                    title={template.title}
+                    subtitle={`SY ${schoolYear}${template.description ? ` · ${template.description}` : ' · Senior High School teacher self-assessment'}`}
+                    action={
+                        <Link
+                            href={route('teacher.ipcrf')}
+                            className="inline-flex h-11 items-center gap-2 rounded-xl bg-white/15 px-4 text-sm font-bold text-white transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                        >
+                            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                            Back to IPCRF Tool
+                        </Link>
+                    }
+                >
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between gap-3 text-[13px] text-white/90">
+                            <span>
+                                {totalAnswered} of {totalItems} rating items answered
+                            </span>
+                            <strong className="text-yellow-300">{isSubmitted ? 'Submitted' : `${progress}% · draft`}</strong>
                         </div>
-
-                        <div className="mb-2 flex justify-between text-sm font-semibold text-gray-700">
-                            <span>Progress: {totalAnswered}/{totalItems} rating items</span>
-                            <span className="text-blue-600">{progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all"
-                                style={{ width: `${progress}%` }}
-                            />
+                        <div className="h-2 overflow-hidden rounded-full bg-white/20">
+                            <div className="h-full rounded-full bg-yellow-400 transition-all duration-300" style={{ width: `${progress}%` }} />
                         </div>
                     </div>
+                </PageHeader>
 
+                <main className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-7 sm:px-6 lg:px-12">
                     {isSubmitted && (
-                        <div className="bg-green-50 border-2 border-green-400 rounded-xl p-4 mb-6 flex items-center gap-3">
-                            <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0" />
-                            <p className="text-green-900 font-semibold">
+                        <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-5">
+                            <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-green-700" />
+                            <p className="font-semibold text-green-900">
                                 This questionnaire was already submitted for SY {schoolYear}. You may still review your answers below.
                             </p>
                         </div>
                     )}
 
                     {/* Step tabs */}
-                    <div className="bg-white rounded-xl shadow-lg p-4 mb-6 border-2 border-gray-200">
-                        <div className="flex flex-wrap gap-2">
+                    <div className="overflow-x-auto pb-1">
+                        <div role="tablist" aria-label="Questionnaire steps" className="flex min-w-max gap-1.5">
                             {steps.map((s, i) => {
                                 const done = stepComplete(s);
                                 const active = i === step;
@@ -201,13 +200,18 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
                                     <button
                                         key={i}
                                         type="button"
+                                        role="tab"
+                                        aria-selected={active}
                                         onClick={() => goToStep(i)}
-                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                                            active ? 'bg-blue-600 text-white shadow'
-                                                : done ? 'bg-green-100 text-green-800'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        className={`inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-[13px] font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 ${
+                                            active
+                                                ? 'border-green-700 bg-green-700 text-white'
+                                                : done
+                                                    ? 'border-green-200 bg-green-50 text-green-800'
+                                                    : 'border-border bg-white text-gray-700 hover:border-green-700'
                                         }`}
                                     >
+                                        {done && !active && <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />}
                                         {s.label}
                                     </button>
                                 );
@@ -215,40 +219,45 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                         {/* PART I - PROFILE */}
                         {current.type === 'profile' && (
-                            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6 border-2 border-blue-200">
-                                <h2 className="text-xl font-bold text-gray-900 mb-1">PART I – Profile</h2>
-                                <p className="text-sm text-gray-500 mb-6">Fields marked * are required.</p>
+                            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-white px-6 py-5">
+                                <div className="flex flex-col gap-1.5">
+                                    <span className="h-1 w-10 rounded-full bg-yellow-400" />
+                                    <h2 className="text-lg font-bold text-gray-900">Part I – Profile</h2>
+                                    <p className="text-[13px] text-gray-500">Fields marked * are required. Some answers are pre-filled from your records.</p>
+                                </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                     {profileFields.filter((f) => f.type !== 'training_table').map((f) => (
-                                        <div key={f.key}>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        <div key={f.key} className="flex flex-col gap-1.5">
+                                            <label htmlFor={`shs-${f.key}`} className="text-[13px] font-semibold text-gray-900">
                                                 {f.label}{f.required ? ' *' : ''}
                                             </label>
                                             {f.options ? (
                                                 <select
+                                                    id={`shs-${f.key}`}
                                                     value={data.profile[f.key] ?? ''}
                                                     disabled={isSubmitted}
                                                     onChange={(e) => setProfile(f.key, e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                                                    className={inputClass}
                                                 >
                                                     <option value="">Select</option>
                                                     {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
                                                 </select>
                                             ) : (
                                                 <input
+                                                    id={`shs-${f.key}`}
                                                     type={f.type === 'number' ? 'number' : 'text'}
                                                     value={data.profile[f.key] ?? ''}
                                                     readOnly={isSubmitted}
                                                     onChange={(e) => setProfile(f.key, e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 read-only:bg-gray-50"
+                                                    className={`${inputClass} ${isPrefilled(f.key) && !isSubmitted ? 'bg-green-50' : ''}`}
                                                 />
                                             )}
                                             {isPrefilled(f.key) && !isSubmitted && (
-                                                <p className="mt-1 text-xs text-blue-500">Pre-filled from your records — edit if needed.</p>
+                                                <p className="text-xs text-green-700">Pre-filled from your records — edit if needed.</p>
                                             )}
                                         </div>
                                     ))}
@@ -256,16 +265,16 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
 
                                 {/* Trainings table */}
                                 {profileFields.filter((f) => f.type === 'training_table').map((f) => (
-                                    <div key={f.key} className="mt-8">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">{f.label}</label>
-                                        <div className="overflow-x-auto rounded-lg border border-gray-200">
-                                            <table className="min-w-full text-sm">
-                                                <thead className="bg-gray-50">
+                                    <div key={f.key} className="mt-2 flex flex-col gap-3">
+                                        <strong className="text-sm text-gray-900">{f.label}</strong>
+                                        <div className="overflow-x-auto rounded-xl border border-border">
+                                            <table className="w-full min-w-[640px] text-sm">
+                                                <thead className="bg-green-50 text-left text-xs text-green-800">
                                                     <tr>
                                                         {f.columns.map((c) => (
-                                                            <th key={c.key} className="text-left font-semibold text-gray-700 px-3 py-2">{c.label}</th>
+                                                            <th key={c.key} scope="col" className="px-3 py-2.5 font-semibold">{c.label}</th>
                                                         ))}
-                                                        <th className="w-10" />
+                                                        <th scope="col" className="w-12"><span className="sr-only">Remove</span></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -275,10 +284,11 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
                                                                 <td key={c.key} className="px-3 py-2">
                                                                     {(c.options || c.type === 'year') ? (
                                                                         <select
+                                                                            aria-label={`${c.label}, training ${idx + 1}`}
                                                                             value={row[c.key] ?? ''}
                                                                             disabled={isSubmitted}
                                                                             onChange={(e) => setTraining(idx, c.key, e.target.value)}
-                                                                            className="w-full px-2 py-1.5 border border-gray-300 rounded-md disabled:bg-gray-50"
+                                                                            className="h-10 w-full rounded-lg border border-border px-2 text-sm focus:border-green-600 focus:ring-2 focus:ring-yellow-300 disabled:bg-[hsl(var(--canvas))]"
                                                                         >
                                                                             <option value="">—</option>
                                                                             {(c.options || YEAR_OPTIONS).map((o) => <option key={o} value={o}>{o}</option>)}
@@ -286,17 +296,23 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
                                                                     ) : (
                                                                         <input
                                                                             type="text"
+                                                                            aria-label={`${c.label}, training ${idx + 1}`}
                                                                             value={row[c.key] ?? ''}
                                                                             readOnly={isSubmitted}
                                                                             onChange={(e) => setTraining(idx, c.key, e.target.value)}
-                                                                            className="w-full px-2 py-1.5 border border-gray-300 rounded-md read-only:bg-gray-50"
+                                                                            className="h-10 w-full rounded-lg border border-border px-2 text-sm focus:border-green-600 focus:ring-2 focus:ring-yellow-300 read-only:bg-[hsl(var(--canvas))]"
                                                                         />
                                                                     )}
                                                                 </td>
                                                             ))}
                                                             <td className="px-2 text-center">
                                                                 {!isSubmitted && (
-                                                                    <button type="button" onClick={() => removeTraining(idx)} className="text-gray-400 hover:text-red-600">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeTraining(idx)}
+                                                                        aria-label={`Remove training ${idx + 1}`}
+                                                                        className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                                                    >
                                                                         <Trash2 className="h-4 w-4" />
                                                                     </button>
                                                                 )}
@@ -307,98 +323,109 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
                                             </table>
                                         </div>
                                         {!isSubmitted && (
-                                            <button type="button" onClick={addTraining} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700">
+                                            <button
+                                                type="button"
+                                                onClick={addTraining}
+                                                className="inline-flex h-10 items-center gap-1.5 self-start rounded-[10px] border border-border bg-white px-3.5 text-sm font-bold text-green-700 hover:border-green-700"
+                                            >
                                                 <Plus className="h-4 w-4" /> Add training
                                             </button>
                                         )}
                                     </div>
                                 ))}
-                            </div>
+                            </section>
                         )}
 
-                        {/* PART II / III - rating grids */}
+                        {/* PART II / III - rating rows */}
                         {current.type !== 'profile' && (() => {
                             const source = current.type === 'performance' ? performance : challenges;
                             const kra = source.kras[current.ki];
                             const bucket = current.type === 'performance' ? 'performance_ratings' : 'challenge_ratings';
                             const prefix = current.type === 'performance' ? 'p' : 'c';
                             return (
-                                <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6 border-2 border-blue-200">
-                                    <p className="text-xs font-bold uppercase tracking-wide text-blue-600">{source.title}</p>
-                                    <h2 className="text-xl font-bold text-gray-900 mt-1 mb-4">{kra.code}: {kra.title}</h2>
-
-                                    {/* Legend */}
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5">
-                                        {scale.map((sc) => (
-                                            <div key={sc.value} className="text-center">
-                                                <span className="font-bold text-gray-900">{sc.description}</span>
-                                                <span className="block text-gray-600">{sc.label} – {sc.value}</span>
-                                            </div>
-                                        ))}
+                                <section className="overflow-hidden rounded-2xl border border-border bg-white">
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-6 py-4">
+                                        <div>
+                                            <p className={`text-xs font-extrabold uppercase tracking-wide ${current.type === 'performance' ? 'text-green-700' : 'text-yellow-700'}`}>
+                                                {source.title}
+                                            </p>
+                                            <h2 className="text-lg font-bold text-gray-900">{kra.code}: {kra.title}</h2>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5 text-xs">
+                                            {scale.map((sc) => (
+                                                <span key={sc.value} className="rounded-full border border-[#EEF2EF] bg-[hsl(var(--canvas))] px-2.5 py-1">
+                                                    <strong>{sc.label}</strong> {sc.description}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-3">
-                                        {kra.items.map((it) => {
-                                            const key = `${prefix}_${current.ki}_${it.no}`;
-                                            return (
-                                                <div key={key} className="rounded-lg border border-gray-200 p-3">
-                                                    <p className="text-sm text-gray-800 mb-2">
-                                                        <span className="font-semibold text-gray-500 mr-1">{it.no}.</span>{it.text}
-                                                    </p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {scale.map((sc) => {
-                                                            const selected = data[bucket][key] === sc.value;
-                                                            return (
-                                                                <button
-                                                                    key={sc.value}
-                                                                    type="button"
-                                                                    disabled={isSubmitted}
-                                                                    onClick={() => setRating(bucket, key, sc.value)}
-                                                                    className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-all ${
-                                                                        selected
-                                                                            ? 'bg-blue-600 text-white border-blue-600 shadow'
-                                                                            : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
-                                                                    } disabled:opacity-60`}
-                                                                    title={sc.description}
-                                                                >
-                                                                    {sc.label} ({sc.value})
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
+                                    {kra.items.map((it) => {
+                                        const key = `${prefix}_${current.ki}_${it.no}`;
+                                        const value = data[bucket][key];
+                                        return (
+                                            <div key={key} className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-gray-100 px-6 py-4 last:border-b-0">
+                                                <span
+                                                    className={`flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[13px] font-extrabold ${
+                                                        value != null ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-500'
+                                                    }`}
+                                                >
+                                                    {it.no}
+                                                </span>
+                                                <p className="min-w-0 flex-[1_1_420px] text-[15px] leading-relaxed text-gray-900">{it.text}</p>
+                                                <div role="radiogroup" aria-label={`Rating for item ${it.no}`} className="flex gap-1.5">
+                                                    {scale.map((sc) => {
+                                                        const selected = value === sc.value;
+                                                        return (
+                                                            <button
+                                                                key={sc.value}
+                                                                type="button"
+                                                                role="radio"
+                                                                aria-checked={selected}
+                                                                disabled={isSubmitted}
+                                                                onClick={() => setRating(bucket, key, sc.value)}
+                                                                title={`${sc.description} (${sc.value})`}
+                                                                className={`flex h-10 w-12 items-center justify-center rounded-[10px] border text-[13px] font-extrabold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 disabled:opacity-60 ${
+                                                                    selected ? 'border-green-700 bg-green-700 text-white' : 'border-border bg-white text-gray-700 hover:border-green-700'
+                                                                }`}
+                                                            >
+                                                                {sc.label}
+                                                            </button>
+                                                        );
+                                                    })}
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </section>
                             );
                         })()}
 
                         {/* Nav + actions */}
-                        <div className="bg-white rounded-xl shadow-lg p-5 mb-6 border-2 border-gray-200 flex flex-wrap items-center justify-between gap-3">
-                            <Button type="button" variant="outline" onClick={() => goToStep(step - 1)} disabled={step === 0}>
-                                <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                            </Button>
-
-                            <div className="flex gap-2">
-                                {!isSubmitted && (
-                                    <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={processing}>
-                                        Save Draft
-                                    </Button>
-                                )}
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            {!isSubmitted ? (
+                                <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={processing} className="h-12 rounded-xl px-5 font-bold">
+                                    Save draft
+                                </Button>
+                            ) : (
+                                <span />
+                            )}
+                            <div className="flex gap-2.5">
+                                <Button type="button" variant="outline" onClick={() => goToStep(step - 1)} disabled={step === 0} className="h-12 rounded-xl px-5 font-bold">
+                                    <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                                </Button>
                                 {!isLastStep && (
-                                    <Button type="button" onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white">
-                                        Next <ChevronRight className="h-4 w-4 ml-1" />
+                                    <Button type="button" onClick={handleNext} className="h-12 rounded-xl bg-green-700 px-6 font-bold text-white hover:bg-green-800">
+                                        Next <ChevronRight className="ml-1 h-4 w-4" />
                                     </Button>
                                 )}
                                 {isLastStep && !isSubmitted && (
-                                    <Button type="submit" disabled={processing} className="bg-green-600 hover:bg-green-700 text-white">
-                                        <Send className="h-4 w-4 mr-2" /> Submit Questionnaire
+                                    <Button type="submit" disabled={processing} className="h-12 rounded-xl bg-green-700 px-6 font-bold text-white hover:bg-green-800">
+                                        <Send className="mr-2 h-4 w-4" /> Submit questionnaire
                                     </Button>
                                 )}
                             </div>
                         </div>
-
                     </form>
 
                     <Dialog open={showConfirm && !isSubmitted} onOpenChange={setShowConfirm}>
@@ -413,13 +440,13 @@ export default function ShsQuestionnaire({ template, response, schoolYear, user,
                                 <Button type="button" variant="outline" onClick={() => setShowConfirm(false)}>
                                     Cancel
                                 </Button>
-                                <Button type="button" onClick={handleConfirmSubmit} disabled={processing} className="bg-green-600 hover:bg-green-700 text-white">
+                                <Button type="button" onClick={handleConfirmSubmit} disabled={processing} className="bg-green-700 text-white hover:bg-green-800">
                                     Yes, submit
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                </div>
+                </main>
             </div>
         </TeacherLayout>
     );

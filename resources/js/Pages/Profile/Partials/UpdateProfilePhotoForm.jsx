@@ -136,7 +136,7 @@ export default function UpdateProfilePhotoForm({ user, onPhotoPreview, className
             {showCropper && (
                 <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden">
-                        <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+                        <div className="bg-sidebar px-6 py-4">
                             <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                 <Crop className="h-5 w-5" />
                                 Crop Your Photo
@@ -176,7 +176,7 @@ export default function UpdateProfilePhotoForm({ user, onPhotoPreview, className
                             <div className="flex gap-3">
                                 <Button
                                     onClick={handleCropConfirm}
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    className="flex-1 bg-green-700 hover:bg-green-800"
                                 >
                                     <Check className="h-4 w-4 mr-2" />
                                     Apply Crop
@@ -219,7 +219,7 @@ export default function UpdateProfilePhotoForm({ user, onPhotoPreview, className
                         <Button
                             onClick={handleUpload}
                             disabled={processing}
-                            className="w-full bg-green-600 hover:bg-green-700"
+                            className="w-full bg-green-700 hover:bg-green-800"
                         >
                             {processing ? 'Uploading...' : 'Save Photo'}
                         </Button>
