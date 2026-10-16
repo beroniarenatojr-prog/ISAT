@@ -15,7 +15,7 @@ use Spatie\Permission\Models\Role;
  *
  * This dual role isn't something self-registration can produce (registration
  * only ever assigns the plain "teacher" role), so it stays seeded here rather
- * than in PersonnelSeeder/TeacherSeeder. Existing passwords are never
+ * than in a staff roster seeder. Existing passwords are never
  * overwritten.
  */
 class AdministratorSeeder extends Seeder

@@ -29,14 +29,9 @@ class DatabaseSeeder extends Seeder
         // IPCRF KRAs + objectives (PPST .2 Proficient + .3 Highly Proficient).
         $this->call(IpcrfObjectiveSeeder::class);
 
-        // Master Teachers I-V - dual role (admin + teacher): they upload MOVs
-        // and the Principal rates them.
-        $this->call(MasterTeacherSeeder::class);
-
-        // Administrative roster (Principal, Head Teachers). Plain teacher
-        // accounts are no longer seeded - teachers create their own accounts
-        // via the /register page and an admin approves them.
-        $this->call(PersonnelSeeder::class);
+        // Staff accounts (Principal, Master Teachers) are no longer seeded -
+        // the Administrator creates them in User Management, and teachers
+        // register themselves via /register for an admin to approve.
 
         // The Administrator: dual-role super-admin + teacher account.
         $this->call(AdministratorSeeder::class);
@@ -46,5 +41,8 @@ class DatabaseSeeder extends Seeder
 
         // "Ready for Self-Assessment" e-TRACES satisfaction survey template.
         $this->call(EtracesSurveySeeder::class);
+
+        // Dummy accounts (one per account type, @demo.local, password "password").
+        $this->call(DemoAccountSeeder::class);
     }
 }
