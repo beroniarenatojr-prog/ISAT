@@ -44,5 +44,9 @@ class DatabaseSeeder extends Seeder
 
         // Dummy accounts (one per account type, @demo.local, password "password").
         $this->call(DemoAccountSeeder::class);
+
+        // A full dummy IPCRF process: one demo teacher at every stage, from
+        // MOVs half uploaded to signed IPCRF approved.
+        $this->call(DemoProcessSeeder::class);
     }
 }
