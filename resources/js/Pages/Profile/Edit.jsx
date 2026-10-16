@@ -4,10 +4,27 @@ import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import UpdateProfilePhotoForm from './Partials/UpdateProfilePhotoForm';
-import { User, Lock, Trash2, Camera, Shield, Mail } from 'lucide-react';
+import { User, Lock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+function SettingsCard({ icon: Icon, iconClass, title, description, children }) {
+    return (
+        <section className="overflow-hidden rounded-2xl border border-border bg-white">
+            <div className="flex items-center gap-3 border-b border-gray-100 px-[22px] py-[18px]">
+                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClass}`}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                    <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+                    <p className="mt-0.5 text-[13px] text-gray-500">{description}</p>
+                </div>
+            </div>
+            <div className="p-[22px]">{children}</div>
+        </section>
+    );
+}
 
 export default function Edit({ mustVerifyEmail, status, auth }) {
     const [photoPreview, setPhotoPreview] = useState(null);
@@ -19,6 +36,7 @@ export default function Edit({ mustVerifyEmail, status, auth }) {
     return (
         <TeacherLayout user={auth.user}>
             <Head title="Profile Settings" />
+
             <ToastContainer
                 position="top-right"
                 autoClose={6000}
@@ -28,122 +46,77 @@ export default function Edit({ mustVerifyEmail, status, auth }) {
                 draggable
             />
 
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50/30 py-8">
-                <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-                    {/* Page Header with Breadcrumb */}
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                            <span>Settings</span>
-                            <span>/</span>
-                            <span className="text-green-600 font-medium">Profile</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                                    Profile Settings
-                                </h1>
-                                <p className="text-lg text-gray-600">
-                                    Manage your account information and security preferences
-                                </p>
-                            </div>
-                        </div>
+            <div className="min-h-screen bg-[hsl(var(--canvas))] text-foreground">
+                <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-9 sm:px-6 lg:px-12">
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[13px] text-gray-500">
+                            Settings / <span className="font-semibold text-green-700">Profile</span>
+                        </span>
+                        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-[38px]">Profile Settings</h1>
+                        <p className="text-base text-gray-500">Manage your account information and security preferences</p>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left Column - Profile Photo */}
-                        <div className="lg:col-span-1">
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-6">
-                                <div className="bg-gradient-to-br from-green-600 to-green-700 px-6 py-8 text-center">
-                                    <div className="inline-block relative mb-4">
-                                        <div className="w-32 h-32 rounded-full overflow-hidden bg-white ring-4 ring-white/30 shadow-xl mx-auto">
-                                            {displayPhoto ? (
-                                                <img
-                                                    src={displayPhoto}
-                                                    alt={auth.user.name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-green-200">
-                                                    <span className="text-5xl font-bold text-green-600">
-                                                        {auth.user.name.charAt(0).toUpperCase()}
-                                                    </span>
-                                                </div>
-                                            )}
+                    <div className="flex flex-wrap items-start gap-6">
+                        {/* Photo card */}
+                        <section className="min-w-0 flex-[1_1_300px] overflow-hidden rounded-2xl border border-border bg-white lg:sticky lg:top-6">
+                            <div className="relative flex flex-col items-center gap-2 overflow-hidden bg-sidebar px-5 py-7 text-center text-white">
+                                <span className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10" />
+                                <div className="relative h-28 w-28 overflow-hidden rounded-full bg-white ring-4 ring-white/30">
+                                    {displayPhoto ? (
+                                        <img src={displayPhoto} alt={auth.user.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-yellow-300">
+                                            <span className="text-[44px] font-extrabold text-green-900">
+                                                {auth.user.name.charAt(0).toUpperCase()}
+                                            </span>
                                         </div>
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white mb-1">{auth.user.name}</h3>
-                                    <p className="text-green-100 text-sm">{auth.user.email}</p>
+                                    )}
                                 </div>
-                                <div className="p-6">
-                                    <UpdateProfilePhotoForm
-                                        user={auth.user}
-                                        onPhotoPreview={setPhotoPreview}
-                                    />
-                                </div>
+                                <h3 className="relative text-[19px] font-bold">{auth.user.name}</h3>
+                                <p className="relative text-[13px] text-white/85">{auth.user.email}</p>
                             </div>
-                        </div>
-
-                        {/* Right Column - Forms */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Profile Information Card */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                <div className="border-b border-gray-100 px-6 py-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-green-100 p-2.5 rounded-xl">
-                                            <User className="h-5 w-5 text-green-600" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
-                                            <p className="text-sm text-gray-500 mt-0.5">Update your name and email address</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-6 bg-gray-50/50">
-                                    <UpdateProfileInformationForm
-                                        mustVerifyEmail={mustVerifyEmail}
-                                        status={status}
-                                    />
-                                </div>
+                            <div className="p-5">
+                                <UpdateProfilePhotoForm user={auth.user} onPhotoPreview={setPhotoPreview} />
                             </div>
+                        </section>
 
-                            {/* Update Password Card */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                <div className="border-b border-gray-100 px-6 py-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-blue-100 p-2.5 rounded-xl">
-                                            <Lock className="h-5 w-5 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold text-gray-900">Security</h2>
-                                            <p className="text-sm text-gray-500 mt-0.5">Keep your account secure with a strong password</p>
-                                        </div>
+                        {/* Forms */}
+                        <div className="flex min-w-0 flex-[2_1_520px] flex-col gap-5">
+                            <SettingsCard
+                                icon={User}
+                                iconClass="bg-green-50 text-green-700"
+                                title="Personal Information"
+                                description="Update your name and email address"
+                            >
+                                <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} />
+                            </SettingsCard>
+
+                            <SettingsCard
+                                icon={Lock}
+                                iconClass="bg-yellow-50 text-yellow-700"
+                                title="Security"
+                                description="Keep your account secure with a strong password"
+                            >
+                                <UpdatePasswordForm />
+                            </SettingsCard>
+
+                            <section className="overflow-hidden rounded-2xl border border-red-200 bg-white">
+                                <div className="flex items-center gap-3 border-b border-red-100 bg-red-50 px-[22px] py-[18px]">
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-600">
+                                        <Trash2 className="h-5 w-5" aria-hidden="true" />
+                                    </span>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-gray-900">Danger Zone</h2>
+                                        <p className="mt-0.5 text-[13px] text-red-700">Irreversible actions that affect your account</p>
                                     </div>
                                 </div>
-                                <div className="p-6 bg-gray-50/50">
-                                    <UpdatePasswordForm />
-                                </div>
-                            </div>
-
-                            {/* Delete Account Card */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden hover:shadow-md transition-shadow">
-                                <div className="border-b border-red-100 px-6 py-5 bg-red-50/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-red-100 p-2.5 rounded-xl">
-                                            <Trash2 className="h-5 w-5 text-red-600" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold text-gray-900">Danger Zone</h2>
-                                            <p className="text-sm text-red-600 mt-0.5">Irreversible actions that affect your account</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-6">
+                                <div className="p-[22px]">
                                     <DeleteUserForm />
                                 </div>
-                            </div>
+                            </section>
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         </TeacherLayout>
     );

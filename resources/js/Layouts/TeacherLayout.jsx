@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { Home, FileText, User, Settings, LogOut, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
+import { Home, FileText, User, Settings, LogOut, ChevronLeft, ChevronRight, LayoutGrid, Menu } from 'lucide-react';
 import { hasRole } from '@/lib/roleLabels';
 
 export default function TeacherLayout({ children, user = { name: 'User', email: 'user@example.com' } }) {
@@ -38,22 +38,22 @@ export default function TeacherLayout({ children, user = { name: 'User', email: 
                 onClick={() => setSidebarOpen(false)}
             ></div>
 
-            {/* Toggle Button - Enhanced */}
+            {/* Menu tab - labelled so teachers can find the drawer */}
             <button
+                type="button"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className={`fixed top-1/2 -translate-y-1/2 z-50 bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-white shadow-xl rounded-r-2xl transition-all duration-300 group border-y border-r ${
+                aria-expanded={sidebarOpen}
+                aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+                className={`fixed top-1/2 z-50 flex -translate-y-1/2 flex-col items-center gap-1.5 rounded-r-[14px] bg-sidebar px-2.5 py-4 text-[11px] font-bold uppercase tracking-wider text-white shadow-[0_6px_16px_rgba(20,83,45,0.3)] transition-all duration-300 hover:bg-sidebar-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 ${
                     sidebarOpen ? 'left-72' : 'left-0'
                 }`}
-                style={{ 
-                    padding: '24px 14px',
-                    borderColor: '#66BB6A'
-                }}
             >
                 {sidebarOpen ? (
-                    <ChevronLeft className="h-6 w-6 transition-colors" style={{ color: '#66BB6A' }} />
+                    <ChevronLeft className="h-[18px] w-[18px] text-yellow-300" aria-hidden="true" />
                 ) : (
-                    <ChevronRight className="h-6 w-6 transition-colors" style={{ color: '#66BB6A' }} />
+                    <Menu className="h-[18px] w-[18px] text-yellow-300" aria-hidden="true" />
                 )}
+                {sidebarOpen ? 'Close' : 'Menu'}
             </button>
 
             {/* Sidebar Drawer - Slides from left */}

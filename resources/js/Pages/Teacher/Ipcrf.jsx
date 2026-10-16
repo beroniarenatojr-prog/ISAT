@@ -1,8 +1,10 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
-import { Upload, FileText, Trash2, X, ZoomIn, ZoomOut, Download, AlertTriangle, Info, ClipboardCheck, Lock } from 'lucide-react';
+import { Upload, FileText, Trash2, X, ZoomIn, ZoomOut, Download, AlertTriangle, Info, ClipboardCheck, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import TeacherLayout from '@/Layouts/TeacherLayout';
+import PageHeader from '@/Components/Teacher/PageHeader';
+import SelfRatingPanel from '@/Components/Teacher/SelfRatingPanel';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -26,7 +28,7 @@ export default function TeacherIpcrf({
     const [deletingSubmission, setDeletingSubmission] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showTeacherInfo, setShowTeacherInfo] = useState(false);
-    const [selfRatingFor, setSelfRatingFor] = useState(null);
+    const [selfRatingFormKey, setSelfRatingFormKey] = useState(0);
     const [deletingSelfRating, setDeletingSelfRating] = useState(null);
     const { data, setData, post, processing, errors, reset } = useForm({
         objective_id: '',
@@ -137,23 +139,24 @@ export default function TeacherIpcrf({
     const getScoringSelfRating = (kraId) =>
         getSelfRatings(kraId).find((item) => item.self_rating !== null && item.self_rating !== '') || null;
 
-    const openSelfRatingUpload = (kra) => {
-        setSelfRatingFor(kra);
-        selfRatingForm.setData({
-            kra_id: kra.id,
-            file: null,
-            self_rating: '',
-            notes: '',
-        });
-    };
+    // Switching KRA clears a half-filled self-rating form so it can't post to the wrong KRA.
+    useEffect(() => {
+        selfRatingForm.reset();
+        selfRatingForm.clearErrors();
+        setSelfRatingFormKey((k) => k + 1);
+    }, [currentKraIndex]);
 
-    const submitSelfRating = (e) => {
+    // The self-rating modal always posts for the KRA on screen; onDone closes it after a successful upload.
+    const submitSelfRating = (e, onDone) => {
         e.preventDefault();
+        const kraId = kras[currentKraIndex]?.id;
+        selfRatingForm.transform((formData) => ({ ...formData, kra_id: kraId }));
         selfRatingForm.post(route('teacher.ipcrf.self-rating.upload'), {
             forceFormData: true,
             onSuccess: () => {
-                setSelfRatingFor(null);
                 selfRatingForm.reset();
+                setSelfRatingFormKey((k) => k + 1);
+                onDone?.();
                 toast.success('Self-rating uploaded successfully!', {
                     position: 'top-right',
                     autoClose: 3000,
@@ -250,54 +253,45 @@ export default function TeacherIpcrf({
                 theme="light"
             />
             
-            <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-                {/* Page Header - Enhanced with Info Button */}
-                <div className="bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 shadow-xl border-b-4 border-green-700 lg:sticky lg:top-0 z-30">
-                    <div className="max-w-full px-6 py-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="relative">
-                                    <div className="absolute -inset-2 bg-white/30 rounded-full blur-xl"></div>
-                                    <div className="relative bg-white rounded-full p-2 shadow-2xl ring-4 ring-white/50">
-                                        <img 
-                                            src="/pictures/isat 1.jpg" 
-                                            alt="ISAT" 
-                                            className="h-16 w-16 rounded-full object-cover"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <h1 className="text-3xl font-extrabold text-white drop-shadow-lg">
-                                        OFFICIAL ELECTRONIC IPCRF TOOL v4.3
-                                    </h1>
-                                    <p className="text-sm text-green-100 font-semibold mt-1">
-                                        {schoolYear ? `Proficient Regular Teacher - SY ${schoolYear}` : 'IPCRF Submission Portal'}
-                                    </p>
-                                </div>
+            <div className="min-h-screen bg-[hsl(var(--canvas))] text-foreground">
+                <PageHeader
+                    title="IPCRF Tool"
+                    subtitle={schoolYear ? `Official Electronic IPCRF Tool v4.3 · SY ${schoolYear}` : 'Official Electronic IPCRF Tool v4.3'}
+                    action={
+                        <button
+                            type="button"
+                            onClick={() => setShowTeacherInfo(true)}
+                            className="inline-flex h-11 items-center gap-2 rounded-xl bg-white/15 px-4 text-sm font-bold text-white transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                        >
+                            <Info className="h-[18px] w-[18px]" aria-hidden="true" />
+                            My IPCRF info
+                        </button>
+                    }
+                >
+                    {totalObjectives > 0 && (
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex justify-between gap-3 text-[13px] text-white/90">
+                                <span>
+                                    {uploadedObjectivesCount} of {totalObjectives} MOVs uploaded
+                                </span>
+                                <strong className="text-yellow-300">{Math.round((uploadedObjectivesCount / totalObjectives) * 100)}%</strong>
                             </div>
-                            
-                            {/* Action Buttons */}
-                            <div className="flex items-center gap-3">
-                                {/* Info Button */}
-                                <button
-                                    onClick={() => setShowTeacherInfo(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
-                                    title="View Teacher Information"
-                                >
-                                    <Info className="h-5 w-5" />
-                                    <span className="font-semibold">Info</span>
-                                </button>
+                            <div className="h-2 overflow-hidden rounded-full bg-white/20">
+                                <div
+                                    className="h-full rounded-full bg-yellow-400 transition-all duration-300"
+                                    style={{ width: `${(uploadedObjectivesCount / totalObjectives) * 100}%` }}
+                                />
                             </div>
                         </div>
-                    </div>
-                </div>
+                    )}
+                </PageHeader>
 
                 {/* Main Content */}
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
                     {/* No Active Config or Locked Notice */}
                     {(noActiveConfig || isLocked) && (
-                        <div className={`${noActiveConfig ? 'bg-red-50 border-red-300' : 'bg-yellow-50 border-yellow-300'} border-2 rounded-2xl shadow-xl p-8 mb-6`}>
+                        <div className={`${noActiveConfig ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'} mb-6 rounded-2xl border p-6`}>
                             <div className="flex items-start gap-4">
                                 <div className={`w-14 h-14 ${noActiveConfig ? 'bg-red-100' : 'bg-yellow-100'} rounded-full flex items-center justify-center flex-shrink-0`}>
                                     <AlertTriangle className={`h-8 w-8 ${noActiveConfig ? 'text-red-600' : 'text-yellow-600'}`} />
@@ -336,85 +330,68 @@ export default function TeacherIpcrf({
                     {!noActiveConfig && !isLocked && currentKra && (
                     <>
                     {/* KRA Navigation - Enhanced */}
-                    <div className="bg-gradient-to-r from-white via-green-50 to-white rounded-2xl shadow-xl p-6 mb-6 border-2 border-green-200 relative overflow-hidden">
-                        {/* Decorative elements */}
-                        <div className="absolute top-0 left-0 w-32 h-32 bg-green-400/10 rounded-full blur-2xl"></div>
-                        <div className="absolute bottom-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl"></div>
-                        
-                        <div className="relative">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
-                                        <span className="text-white font-bold text-lg">{currentKraIndex + 1}</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Key Result Area</p>
-                                        <h3 className="text-xl font-bold text-gray-900">
-                                            <span className="text-green-600">{currentKra.name}</span>
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={prevKra}
-                                        disabled={currentKraIndex === 0}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-2 border-green-300 hover:bg-green-50 hover:text-green-700 hover:border-green-400 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
-                                    >
-                                        ← Previous
-                                    </Button>
-                                    <Button
-                                        onClick={nextKra}
-                                        disabled={currentKraIndex === kras.length - 1}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-2 border-green-300 hover:bg-green-50 hover:text-green-700 hover:border-green-400 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
-                                    >
-                                        Next →
-                                    </Button>
+                    <div className="mb-6 flex flex-col gap-[18px] rounded-2xl border border-border bg-white px-6 py-5">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-700 text-[17px] font-extrabold text-white">
+                                    {currentKraIndex + 1}
+                                </span>
+                                <div>
+                                    <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Key Result Area</p>
+                                    <h3 className="text-[19px] font-bold text-gray-900">{currentKra.name}</h3>
                                 </div>
                             </div>
-                            
-                            <div className="flex flex-wrap gap-2">
-                                {kras.map((kra, index) => (
+                            <div className="flex gap-2">
+                                <Button onClick={prevKra} disabled={currentKraIndex === 0} variant="outline" className="h-10 rounded-[10px] font-semibold">
+                                    ← Previous
+                                </Button>
+                                <Button onClick={nextKra} disabled={currentKraIndex === kras.length - 1} variant="outline" className="h-10 rounded-[10px] font-semibold">
+                                    Next →
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div role="tablist" aria-label="Key Result Areas" className="flex flex-wrap gap-2">
+                            {kras.map((kra, index) => {
+                                const active = index === currentKraIndex;
+                                const done = kra.objectives.filter((obj) => getSubmission(obj.id, null).length > 0).length;
+                                const full = kra.objectives.length > 0 && done === kra.objectives.length;
+                                return (
                                     <button
                                         key={kra.id}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={active}
+                                        title={kra.name}
                                         onClick={() => setCurrentKraIndex(index)}
-                                        className={`px-6 py-3 text-base font-bold rounded-xl transition-all duration-200 shadow-md ${
-                                            index === currentKraIndex
-                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105 ring-4 ring-green-200'
-                                                : 'bg-white text-gray-700 hover:bg-green-50 hover:text-green-700 hover:shadow-lg hover:scale-105 border-2 border-gray-200 hover:border-green-300'
+                                        className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 ${
+                                            active ? 'border-green-700 bg-green-700 text-white' : 'border-border bg-white text-gray-800 hover:border-green-700'
                                         }`}
                                     >
                                         KRA {index + 1}
+                                        <span
+                                            className={`rounded-full px-[7px] py-px text-[11px] ${
+                                                active ? 'bg-white/20 text-white' : full ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
+                                            }`}
+                                        >
+                                            {done}/{kra.objectives.length}
+                                        </span>
                                     </button>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
                     </div>
 
                     {/* IPCRF Table */}
-                    <div className="bg-white rounded-lg shadow overflow-hidden border-2 border-gray-300">
+                    <div className="overflow-hidden rounded-2xl border border-border bg-white">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full border-collapse">
-                                <thead className="bg-green-600">
+                            <table className="w-full min-w-[860px] border-collapse text-[15px]">
+                                <thead className="bg-green-700 text-left text-xs uppercase tracking-wider text-white">
                                     <tr>
-                                        <th className="px-4 py-3 text-center text-sm font-bold text-white uppercase border-2 border-gray-400 w-32">
-                                            KRA
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-sm font-bold text-white uppercase border-2 border-gray-400 w-24">
-                                            Objective No.
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-sm font-bold text-white uppercase border-2 border-gray-400">
-                                            Objective
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-sm font-bold text-white uppercase border-2 border-gray-400 w-48">
-                                            Mode of Verification (MOV)
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-sm font-bold text-white uppercase border-2 border-gray-400 w-20">
-                                            Weight
-                                        </th>
+                                        <th scope="col" className="w-[110px] px-[18px] py-3.5">Objective No.</th>
+                                        <th scope="col" className="px-[18px] py-3.5">Objective</th>
+                                        <th scope="col" className="w-[300px] px-[18px] py-3.5">Mode of Verification (MOV)</th>
+                                        <th scope="col" className="w-[110px] px-[18px] py-3.5 text-right">Weight</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white">
@@ -434,84 +411,80 @@ export default function TeacherIpcrf({
                                         const isLastInKra = objIndex === currentKra.objectives.length - 1;
                                         
                                         return (
-                                            <tr key={objective.id} className={`hover:bg-green-200 transition-colors ${globalIndex % 2 === 0 ? 'bg-green-100' : 'bg-white'}`}>
-                                                {objIndex === 0 && (
-                                                    <td 
-                                                        rowSpan={currentKra.objectives.length} 
-                                                        className="px-4 py-4 text-base font-semibold text-gray-900 bg-green-50 border-l-2 border-r-2 border-t-2 border-gray-400 align-top"
-                                                        style={{ borderBottom: '2px solid rgb(156, 163, 175)' }}
-                                                    >
-                                                        <div className="font-bold mb-1">{currentKraIndex + 1}. {currentKra.name}</div>
-                                                    </td>
-                                                )}
-                                                <td className={`px-4 py-4 text-base text-gray-900 text-center border-l-2 border-r-2 border-gray-400 font-bold whitespace-nowrap ${isLastInKra ? 'border-b-2' : ''} ${objIndex === 0 ? 'border-t-2' : ''}`}>
+                                            <tr key={objective.id} className="border-t border-[#EEF2EF] align-top transition-colors hover:bg-green-50/60">
+                                                <td className="whitespace-nowrap px-[18px] py-[18px] font-extrabold text-green-700">
                                                     {objective.code || globalIndex}
                                                 </td>
 
-                                                <td className={`px-5 py-4 text-lg leading-relaxed text-gray-800 border-l-2 border-r-2 border-gray-400 ${isLastInKra ? 'border-b-2' : ''} ${objIndex === 0 ? 'border-t-2' : ''}`}>
+                                                <td className="px-[18px] py-[18px] leading-relaxed text-gray-800">
                                                     {objective.description}
                                                 </td>
-                                                
+
                                                 {/* Mode of Verification (MOV) Column */}
-                                                <td className={`px-4 py-3 border-l-2 border-r-2 border-gray-400 ${isLastInKra ? 'border-b-2' : ''} ${objIndex === 0 ? 'border-t-2' : ''}`}>
-                                                    <div className="flex flex-col items-center gap-2 py-2">
-                                                        {/* Show all existing submissions */}
-                                                        {objectiveSubmissions.length > 0 && (
-                                                            <div className="flex flex-col gap-2 w-full">
-                                                                {objectiveSubmissions.map((submission, idx) => (
-                                                                    <div key={submission.id} className="relative flex flex-col items-center gap-1 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-green-300 transition-all duration-200">
-                                                                        {/* Remove X button in top-right corner */}
-                                                                        {submission.status !== 'reviewed' && (
-                                                                            <button
-                                                                                onClick={() => deleteSubmission(submission.id)}
-                                                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 z-10"
-                                                                                title="Remove this MOV"
-                                                                            >
-                                                                                <X className="h-3.5 w-3.5" />
-                                                                            </button>
-                                                                        )}
-                                                                        
-                                                                        <button
-                                                                            onClick={() => setViewingPdf({ url: route('teacher.ipcrf.submissions.document', submission.id), title: `MOV Evidence ${idx + 1}` })}
-                                                                            className="text-green-600 hover:text-green-800 flex items-center gap-2 w-full justify-center transition-colors"
-                                                                        >
-                                                                            <FileText className="h-5 w-5" />
-                                                                            <span className="text-base font-semibold">MOV {idx + 1}</span>
-                                                                        </button>
-                                                                        
-                                                                        {submission.status === 'reviewed' && submission.rating && (
-                                                                            <span className="text-sm text-green-600 font-semibold bg-green-50 px-2 py-1 rounded-full">
-                                                                                ★ {submission.rating}
-                                                                            </span>
-                                                                        )}
-                                                                        {submission.status === 'submitted' && (
-                                                                            <span className="text-sm text-yellow-600 font-medium bg-yellow-50 px-2 py-1 rounded-full">Pending Review</span>
-                                                                        )}
-                                                                        {submission.status === 'pending' && (
-                                                                            <span className="text-sm text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full">Draft</span>
-                                                                        )}
-                                                                    </div>
-                                                                ))}
+                                                <td className="px-[18px] py-3.5">
+                                                    <div className="flex flex-col gap-2">
+                                                        {objectiveSubmissions.map((submission, idx) => (
+                                                            <div key={submission.id} className="relative flex items-center gap-2.5 rounded-[10px] border border-border bg-white p-2.5">
+                                                                <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-red-50 text-[10px] font-extrabold text-red-700">PDF</span>
+                                                                <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setViewingPdf({ url: route('teacher.ipcrf.submissions.document', submission.id), title: `MOV Evidence ${idx + 1}` })}
+                                                                        className="text-[13px] font-semibold text-gray-900 hover:text-green-700 hover:underline"
+                                                                    >
+                                                                        MOV {idx + 1}
+                                                                    </button>
+                                                                    {submission.status === 'reviewed' && submission.rating && (
+                                                                        <span className="rounded-full bg-green-100 px-2 py-px text-[11px] font-bold text-green-800">
+                                                                            Rated {submission.rating} by School Head
+                                                                        </span>
+                                                                    )}
+                                                                    {submission.status === 'submitted' && (
+                                                                        <span className="rounded-full bg-yellow-100 px-2 py-px text-[11px] font-bold text-yellow-800">Pending review</span>
+                                                                    )}
+                                                                    {submission.status === 'pending' && (
+                                                                        <span className="rounded-full bg-gray-100 px-2 py-px text-[11px] font-bold text-gray-600">Draft</span>
+                                                                    )}
+                                                                </span>
+                                                                {submission.status !== 'reviewed' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => deleteSubmission(submission.id)}
+                                                                        className="flex h-7 w-7 flex-none items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                                                        aria-label={`Remove MOV ${idx + 1}`}
+                                                                        title="Remove this MOV"
+                                                                    >
+                                                                        <X className="h-4 w-4" />
+                                                                    </button>
+                                                                )}
                                                             </div>
+                                                        ))}
+
+                                                        {objectiveSubmissions.length > 0 ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleFileUpload(objective.id, null)}
+                                                                className="h-[34px] self-start rounded-lg border border-border bg-white px-3 text-[13px] font-bold text-green-700 transition-colors hover:border-green-700"
+                                                            >
+                                                                + Add another MOV
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleFileUpload(objective.id, null)}
+                                                                className="flex h-14 w-full items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-yellow-400 bg-yellow-50 text-sm font-bold text-yellow-800 transition-colors hover:bg-yellow-100"
+                                                            >
+                                                                <Upload className="h-4 w-4" aria-hidden="true" />
+                                                                Upload MOV (PDF)
+                                                            </button>
                                                         )}
-                                                        
-                                                        {/* Add More Button - Always visible */}
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => handleFileUpload(objective.id, null)}
-                                                            className="text-sm h-9 w-full mt-1 font-medium"
-                                                        >
-                                                            <Upload className="h-4 w-4 mr-1" />
-                                                            {objectiveSubmissions.length > 0 ? 'Add More' : 'Upload MOV'}
-                                                        </Button>
                                                     </div>
                                                 </td>
-                                                
+
                                                 {/* Weight Column - Computed */}
-                                                <td className={`px-4 py-4 text-base text-gray-900 text-center font-bold border-l-2 border-r-2 border-gray-400 ${isLastInKra ? 'border-b-2' : ''} ${objIndex === 0 ? 'border-t-2' : ''}`}>
+                                                <td className="px-[18px] py-[18px] text-right font-bold text-gray-900">
                                                     {showDetails ? (
-                                                        <div className="flex flex-col items-center gap-1">
+                                                        <div className="flex flex-col items-end gap-1">
                                                             <span className="text-lg font-bold text-green-700">{objective.weight}%</span>
                                                             {objectiveSubmissions.length > 0 && objectiveSubmissions[0].rating && (
                                                                 <span className="text-sm text-gray-600">
@@ -526,11 +499,11 @@ export default function TeacherIpcrf({
                                             </tr>
                                         );
                                     })}
-                                    <tr className="bg-green-100">
-                                        <td colSpan="4" className="px-4 py-4 text-right text-base font-bold text-gray-900 border-2 border-gray-400">
-                                            TOTAL
+                                    <tr className="border-t-2 border-green-700/20 bg-green-50">
+                                        <td colSpan="3" className="px-[18px] py-4 text-right text-sm font-bold uppercase tracking-wider text-gray-900">
+                                            Total
                                         </td>
-                                        <td className="px-4 py-4 text-center text-base font-bold text-gray-900 border-2 border-gray-400">
+                                        <td className="px-[18px] py-4 text-right text-base font-bold text-gray-900">
                                             {/* Calculate weighted total based on ratings */}
                                             {(() => {
                                                 let totalWeight = 0;
@@ -572,7 +545,7 @@ export default function TeacherIpcrf({
 
                                                 if (combinedWeight > 0) {
                                                     return (
-                                                        <div className="flex flex-col items-center gap-1">
+                                                        <div className="flex flex-col items-end gap-1">
                                                             <span className="text-lg font-bold text-green-700">{combinedWeight.toFixed(2)}%</span>
                                                             <span className="text-sm text-gray-600">
                                                                 (Weighted: {combinedWeighted.toFixed(2)}%)
@@ -594,132 +567,51 @@ export default function TeacherIpcrf({
                         </div>
                     </div>
 
-                    {/* Self-Rating upload for the current KRA — hidden until every MOV is uploaded */}
+                    {/* Self-rating for the current KRA — hidden until every MOV is uploaded */}
                     {currentKra && selfRatingActive && allMovsUploaded && (
-                        <div className="mt-6 bg-white rounded-2xl shadow-lg border-2 border-amber-200 overflow-hidden">
-                            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-6 py-4 border-b-2 border-amber-200">
-                                <div className="flex flex-wrap items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
-                                            <ClipboardCheck className="h-6 w-6 text-white" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="text-lg font-bold text-gray-900">
-                                                    Self-Rating for KRA's
-                                                </h4>
-                                                <span className="inline-flex items-center rounded-full bg-amber-200 px-2.5 py-0.5 text-xs font-bold text-amber-900">
-                                                    {selfRatingWeight.toFixed(2)}%
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-gray-600">
-                                                Upload your own rating sheet for {currentKra.name}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-0.5">
-                                                Self-rating is worth {Number(selfRatingTotalWeight).toFixed(2)}% of the
-                                                total 100%, split across {kras.length} KRA{kras.length === 1 ? '' : 's'}.
-                                                Objectives carry the remaining {(100 - Number(selfRatingTotalWeight)).toFixed(2)}%.
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        onClick={() => openSelfRatingUpload(currentKra)}
-                                        className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
-                                    >
-                                        <Upload className="h-4 w-4 mr-2" />
-                                        Upload Self-Rating
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="px-6 py-5">
-                                {getSelfRatings(currentKra.id).length === 0 ? (
-                                    <div className="flex items-start gap-3 p-4 bg-amber-50/60 rounded-xl border border-dashed border-amber-300">
-                                        <Info className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                                        <p className="text-sm text-amber-900">
-                                            No self-rating uploaded for this KRA yet. Attach your accomplished
-                                            self-rating sheet (PDF) so your rater can review it alongside your MOVs.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <ul className="space-y-3">
-                                        {getSelfRatings(currentKra.id).map((item) => (
-                                            <li
-                                                key={item.id}
-                                                className="flex flex-wrap items-center justify-between gap-3 p-4 bg-gray-50 rounded-xl border-2 border-gray-200"
-                                            >
-                                                <div className="flex items-center gap-3 min-w-0">
-                                                    <FileText className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                                                    <div className="min-w-0">
-                                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                                            {item.original_name || 'Self-rating document'}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500">
-                                                            Uploaded {new Date(item.created_at).toLocaleDateString()}
-                                                            {item.self_rating ? ` • Self-rating: ${Number(item.self_rating).toFixed(2)}/5` : ''}
-                                                        </p>
-                                                        {item.notes && (
-                                                            <p className="text-xs text-gray-600 mt-1 italic">{item.notes}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => setViewingPdf({
-                                                            url: route('teacher.ipcrf.self-rating.document', item.id),
-                                                            title: `Self-Rating - ${currentKra.name}`,
-                                                        })}
-                                                        className="border-2 border-amber-300 text-amber-700 hover:bg-amber-50 font-semibold"
-                                                    >
-                                                        <FileText className="h-3 w-3 mr-1" />
-                                                        View
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => setDeletingSelfRating(item.id)}
-                                                        className="border-2 border-red-300 text-red-600 hover:bg-red-50 font-semibold"
-                                                    >
-                                                        <Trash2 className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-                        </div>
+                        <SelfRatingPanel
+                            kra={currentKra}
+                            kraNumber={currentKraIndex + 1}
+                            weight={selfRatingWeight}
+                            totalWeight={selfRatingTotalWeight}
+                            kraCount={kras.length}
+                            uploads={getSelfRatings(currentKra.id)}
+                            form={selfRatingForm}
+                            formKey={`${currentKra.id}-${selfRatingFormKey}`}
+                            onSubmit={submitSelfRating}
+                            onView={(item) => setViewingPdf({
+                                url: route('teacher.ipcrf.self-rating.document', item.id),
+                                title: `Self-Rating - ${currentKra.name}`,
+                            })}
+                            onDelete={(id) => setDeletingSelfRating(id)}
+                        />
                     )}
 
                     {/* MOV Upload Progress / Survey Gate */}
                     {totalObjectives > 0 && !allMovsUploaded && (
-                        <div className="mt-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl p-8">
+                        <div className="mt-6 rounded-2xl border border-yellow-200 bg-yellow-50 p-6">
                             <div className="flex items-start gap-4">
-                                <div className="w-14 h-14 bg-gray-200 rounded-2xl flex items-center justify-center flex-shrink-0">
-                                    <Lock className="h-7 w-7 text-gray-500" />
+                                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white text-yellow-700">
+                                    <Lock className="h-6 w-6" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-2xl font-bold text-gray-800 mb-1">Finish Uploading Your MOVs First</h3>
-                                    <p className="text-gray-600 mb-4">
+                                    <h3 className="mb-1 text-lg font-bold text-yellow-900">Finish uploading your MOVs first</h3>
+                                    <p className="mb-4 text-sm text-yellow-800">
                                         The IPCRF Questionnaire unlocks once you've uploaded a Mode of Verification (MOV) for every objective.
                                     </p>
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+                                    <div className="mb-3 flex items-center gap-3">
+                                        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white">
                                             <div
-                                                className="bg-blue-500 h-3 rounded-full transition-all duration-300"
+                                                className="h-full rounded-full bg-yellow-400 transition-all duration-300"
                                                 style={{ width: `${(uploadedObjectivesCount / totalObjectives) * 100}%` }}
                                             />
                                         </div>
-                                        <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                                        <span className="whitespace-nowrap text-sm font-semibold text-yellow-900">
                                             {uploadedObjectivesCount} / {totalObjectives} objectives
                                         </span>
                                     </div>
-                                    <div className="text-sm text-gray-600">
-                                        <p className="font-semibold mb-1">Still missing a MOV for:</p>
+                                    <div className="text-sm text-yellow-900">
+                                        <p className="mb-1 font-semibold">Still missing a MOV for:</p>
                                         <ul className="list-disc list-inside space-y-0.5">
                                             {missingObjectives.map((obj) => (
                                                 <li key={obj.id}>{obj.code} - {obj.description}</li>
@@ -731,99 +623,68 @@ export default function TeacherIpcrf({
                         </div>
                     )}
 
-                    {/* Take Survey Call-to-Action */}
+                    {/* Questionnaire banners — unlock once every MOV is uploaded */}
                     {allMovsUploaded && (
-                        <div className="mt-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl shadow-2xl p-8 border-2 border-blue-300 relative overflow-hidden">
-                            {/* Decorative elements */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl"></div>
-                            <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/10 rounded-full blur-2xl"></div>
-                            
-                            <div className="relative">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
-                                                <FileText className="h-8 w-8 text-white" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-3xl font-extrabold text-gray-900 mb-2">Ready for Self-Assessment?</h3>
-                                                <p className="text-lg text-gray-700">Complete the IPCRF Questionnaire to evaluate your performance</p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-start gap-3 p-5 bg-white/80 backdrop-blur rounded-xl border-2 border-blue-200">
-                                            <Info className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
-                                            <div className="text-base text-blue-900">
-                                                <p className="font-semibold mb-2">What is the IPCRF Questionnaire?</p>
-                                                <ul className="list-disc list-inside space-y-1 text-blue-800">
-                                                    <li>Self-rate your performance across all Key Result Areas (KRAs)</li>
-                                                    <li>Provide insights on challenges and training needs</li>
-                                                    <li>Help improve teaching practices and professional development</li>
-                                                    <li>Takes approximately 15-20 minutes to complete</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="ml-8">
-                                        <a
-                                            href={route('teacher.questionnaire')}
-                                            className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:scale-105"
-                                        >
-                                            <FileText className="h-7 w-7" />
-                                            Take Survey
-                                        </a>
-                                    </div>
+                        <section className="relative mt-6 flex flex-wrap items-center gap-6 overflow-hidden rounded-3xl bg-sidebar px-6 py-8 text-white sm:px-10">
+                            <span className="pointer-events-none absolute -right-16 -top-20 h-60 w-60 rounded-full bg-white/10" />
+                            <span className="pointer-events-none absolute -bottom-28 right-56 h-52 w-52 rounded-full bg-yellow-300/20" />
+                            <div className="relative flex min-w-0 flex-[1_1_420px] flex-col gap-2.5">
+                                <span className="inline-flex items-center gap-2 self-start rounded-full bg-yellow-300/20 px-3 py-1 text-[13px] font-bold text-yellow-300">
+                                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                    All {totalObjectives} MOVs uploaded
+                                </span>
+                                <h3 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-[34px]">Ready for Self-Assessment?</h3>
+                                <p className="max-w-[620px] text-base text-white/90">
+                                    Answer the e-TRACES survey on teachers' level of satisfaction and performance. It takes about 15–20 minutes and you can save a draft.
+                                </p>
+                                <div className="mt-1 flex flex-wrap gap-2 text-[13px]">
+                                    <span className="rounded-full bg-white/15 px-3 py-1">Rate each statement, Very Satisfied to Very Dissatisfied</span>
+                                    <span className="rounded-full bg-white/15 px-3 py-1">Saves as a draft</span>
+                                    <span className="rounded-full bg-white/15 px-3 py-1">Needed for the signed IPCRF</span>
                                 </div>
                             </div>
-                        </div>
+                            <a
+                                href={route('teacher.questionnaire')}
+                                className="relative inline-flex h-[60px] items-center gap-2.5 whitespace-nowrap rounded-2xl bg-yellow-400 px-8 text-lg font-extrabold text-green-900 transition-colors hover:bg-yellow-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                            >
+                                Take Survey
+                                <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                            </a>
+                        </section>
                     )}
 
-                    {/* SHS Performance & Challenges Questionnaire Call-to-Action
-                        (hidden until every MOV is uploaded, same gate as the survey above). */}
+                    {/* SHS Performance & Challenges — same gate as the survey above */}
                     {allMovsUploaded && (
-                    <div className="mt-8 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl shadow-2xl p-8 border-2 border-emerald-300 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl"></div>
-                            <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-400/10 rounded-full blur-2xl"></div>
-
-                            <div className="relative">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-xl">
-                                                <ClipboardCheck className="h-8 w-8 text-white" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-3xl font-extrabold text-gray-900 mb-2">SHS Performance &amp; Challenges</h3>
-                                                <p className="text-lg text-gray-700">Senior High School teacher self-assessment questionnaire</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-start gap-3 p-5 bg-white/80 backdrop-blur rounded-xl border-2 border-emerald-200">
-                                            <Info className="h-6 w-6 text-emerald-600 flex-shrink-0 mt-0.5" />
-                                            <div className="text-base text-emerald-900">
-                                                <p className="font-semibold mb-2">What's inside?</p>
-                                                <ul className="list-disc list-inside space-y-1 text-emerald-800">
-                                                    <li>Part I – Profile and trainings attended (last 3 years)</li>
-                                                    <li>Part II – Performance rating across the 5 KRAs (14 items)</li>
-                                                    <li>Part III – Challenges encountered across the 5 KRAs (60 items)</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="ml-8">
-                                        <a
-                                            href={route('teacher.shs-questionnaire')}
-                                            className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:via-teal-700 hover:to-cyan-700 text-white text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:scale-105"
-                                        >
-                                            <ClipboardCheck className="h-7 w-7" />
-                                            Start
-                                        </a>
-                                    </div>
+                        <section className="relative mt-6 flex flex-wrap items-center gap-6 overflow-hidden rounded-3xl bg-sidebar px-6 py-8 text-white sm:px-10">
+                            <span className="pointer-events-none absolute -right-16 -top-20 h-60 w-60 rounded-full bg-white/10" />
+                            <span className="pointer-events-none absolute -bottom-32 left-[40%] h-56 w-56 rounded-full bg-yellow-300/20" />
+                            <div className="relative flex min-w-0 flex-[1_1_420px] flex-col gap-2.5">
+                                <span className="self-start rounded-full bg-yellow-300/20 px-3 py-1 text-[13px] font-bold text-yellow-300">
+                                    For Senior High School teachers
+                                </span>
+                                <h3 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-[34px]">SHS Performance &amp; Challenges</h3>
+                                <p className="text-base text-white/90">Tell us how you performed and what got in the way this school year.</p>
+                                <div className="mt-1.5 flex flex-wrap gap-2.5">
+                                    {[
+                                        ['3', 'parts'],
+                                        ['14', 'rating items'],
+                                        ['60', 'challenge items'],
+                                    ].map(([value, label]) => (
+                                        <span key={label} className="flex flex-col rounded-xl bg-white/15 px-3.5 py-2.5">
+                                            <strong className="text-xl">{value}</strong>
+                                            <span className="text-xs text-white/80">{label}</span>
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
+                            <a
+                                href={route('teacher.shs-questionnaire')}
+                                className="relative inline-flex h-[60px] items-center gap-2.5 whitespace-nowrap rounded-2xl bg-yellow-400 px-8 text-lg font-extrabold text-green-900 transition-colors hover:bg-yellow-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                            >
+                                Start
+                                <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                            </a>
+                        </section>
                     )}
 
                     </>
@@ -992,124 +853,6 @@ export default function TeacherIpcrf({
                                             <>
                                                 <Upload className="h-5 w-5 mr-2" />
                                                 Upload
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                {/* Self-Rating Upload Modal */}
-                {selfRatingFor && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-                        <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200">
-                            {/* Modal Header */}
-                            <div className="flex items-center gap-3 px-6 py-5 border-b-2 border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-t-2xl">
-                                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
-                                    <ClipboardCheck className="h-6 w-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Upload Self-Rating</h3>
-                                    <p className="text-sm text-gray-600 font-medium">
-                                        KRA: {selfRatingFor.name}
-                                    </p>
-                                    <p className="text-xs text-amber-800 font-semibold">
-                                        Worth {selfRatingWeight.toFixed(2)}% of the total 100%
-                                    </p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={submitSelfRating}>
-                                <div className="px-6 py-6 space-y-5">
-                                    <div>
-                                        <label className="block text-base font-bold text-gray-800 mb-3">
-                                            Self-Rating Document (PDF)
-                                        </label>
-                                        <input
-                                            type="file"
-                                            accept=".pdf"
-                                            onChange={(e) => selfRatingForm.setData('file', e.target.files[0])}
-                                            className="block w-full text-base text-gray-700 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-base file:font-bold file:bg-gradient-to-r file:from-amber-500 file:to-yellow-600 file:text-white hover:file:from-amber-600 hover:file:to-yellow-700 file:shadow-lg hover:file:shadow-xl file:transition-all file:duration-200 cursor-pointer border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-amber-400 transition-colors bg-gray-50"
-                                            required
-                                        />
-                                        {selfRatingForm.errors.file && (
-                                            <div className="flex items-center gap-2 mt-2 text-red-600">
-                                                <AlertTriangle className="h-4 w-4" />
-                                                <p className="text-sm font-medium">{selfRatingForm.errors.file}</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-base font-bold text-gray-800 mb-3">
-                                            Your Self-Rating (1 - 5)
-                                        </label>
-                                        <p className="text-sm text-gray-600 mb-2">
-                                            Your score is converted to this KRA&apos;s {selfRatingWeight.toFixed(2)}% share.
-                                            Leave blank to upload the document only.
-                                        </p>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="1"
-                                            max="5"
-                                            value={selfRatingForm.data.self_rating}
-                                            onChange={(e) => selfRatingForm.setData('self_rating', e.target.value)}
-                                            className="block w-full text-base rounded-xl border-2 border-gray-300 shadow-sm focus:border-amber-500 focus:ring-4 focus:ring-amber-200 transition-all p-4"
-                                            placeholder="Rate yourself from 1 to 5 for this KRA"
-                                        />
-                                        {selfRatingForm.errors.self_rating && (
-                                            <div className="flex items-center gap-2 mt-2 text-red-600">
-                                                <AlertTriangle className="h-4 w-4" />
-                                                <p className="text-sm font-medium">{selfRatingForm.errors.self_rating}</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-base font-bold text-gray-800 mb-3">
-                                            Notes (Optional)
-                                        </label>
-                                        <textarea
-                                            value={selfRatingForm.data.notes}
-                                            onChange={(e) => selfRatingForm.setData('notes', e.target.value)}
-                                            rows="4"
-                                            className="block w-full text-base rounded-xl border-2 border-gray-300 shadow-sm focus:border-amber-500 focus:ring-4 focus:ring-amber-200 transition-all p-4 resize-none"
-                                            placeholder="Explain how you arrived at this self-rating..."
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Modal Footer */}
-                                <div className="flex items-center justify-end gap-3 px-6 py-5 bg-gray-50 rounded-b-2xl border-t border-gray-200">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setSelfRatingFor(null)}
-                                        disabled={selfRatingForm.processing}
-                                        className="px-8 py-3 text-base font-bold border-2 border-gray-300 hover:bg-gray-100 rounded-xl transition-all disabled:opacity-50"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={selfRatingForm.processing}
-                                        className="px-8 py-3 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
-                                    >
-                                        {selfRatingForm.processing ? (
-                                            <>
-                                                <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Uploading...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Upload className="h-5 w-5 mr-2" />
-                                                Upload Self-Rating
                                             </>
                                         )}
                                     </Button>

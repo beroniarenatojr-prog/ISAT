@@ -1,0 +1,1 @@
+import{j as s}from"./app-DfgrAp3D.js";function x({value:t,className:e="",children:o,...r}){return s.jsx("label",{...r,className:"block text-[13px] font-semibold text-gray-900 "+e,children:t||o})}export{x as I};

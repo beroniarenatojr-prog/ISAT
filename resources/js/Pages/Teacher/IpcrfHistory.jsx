@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { History, TrendingUp, FileText, Award, Calendar, Star, Download, Info, XCircle, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import TeacherLayout from '@/Layouts/TeacherLayout';
+import PageHeader from '@/Components/Teacher/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { generateIpcrfOfficialForm } from '@/lib/ipcrfOfficialForm';
@@ -78,226 +79,168 @@ export default function IpcrfHistory({ historyData, user }) {
         }
     };
     
+    // Adjectival bands from IpcrfRating::getAdjectivalRating, in the Admin Panel palette.
     const getPerformanceColor = (level) => {
         const colors = {
-            'Outstanding': 'text-purple-600 bg-purple-100 border-purple-300',
-            'Very Satisfactory': 'text-blue-600 bg-blue-100 border-blue-300',
-            'Satisfactory': 'text-green-600 bg-green-100 border-green-300',
-            'Unsatisfactory': 'text-yellow-600 bg-yellow-100 border-yellow-300',
-            'Poor': 'text-red-600 bg-red-100 border-red-300',
+            'Outstanding': 'bg-green-900 text-white',
+            'Very Satisfactory': 'bg-green-700 text-white',
+            'Satisfactory': 'bg-green-100 text-green-800',
+            'Unsatisfactory': 'bg-yellow-100 text-yellow-800',
+            'Poor': 'bg-red-100 text-red-800',
         };
-        return colors[level] || 'text-gray-600 bg-gray-100 border-gray-300';
+        return colors[level] || 'bg-gray-100 text-gray-700';
     };
 
     const getStatusBadge = (status) => {
         const styles = {
-            submitted: 'bg-blue-100 text-blue-800',
-            approved: 'bg-green-100 text-green-800',
-            rejected: 'bg-red-100 text-red-800',
+            submitted: 'bg-yellow-100 text-yellow-800',
+            approved: 'bg-green-800 text-white',
+            rejected: 'bg-red-100 text-red-700',
         };
-        return styles[status] || 'bg-gray-100 text-gray-800';
+        return styles[status] || 'bg-gray-100 text-gray-700';
     };
+
+    const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
     return (
         <TeacherLayout user={user}>
             <Head title="IPCRF History" />
 
-            <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 shadow-xl border-b-4 border-green-700 lg:sticky lg:top-0 z-30">
-                    <div className="max-w-full px-6 py-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="relative">
-                                    <div className="absolute -inset-2 bg-white/30 rounded-full blur-xl"></div>
-                                    <div className="relative bg-white rounded-full p-2 shadow-2xl ring-4 ring-white/50">
-                                        <img 
-                                            src="/pictures/isat 1.jpg" 
-                                            alt="ISAT" 
-                                            className="h-16 w-16 rounded-full object-cover"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <h1 className="text-3xl font-extrabold text-white drop-shadow-lg">
-                                        IPCRF History
-                                    </h1>
-                                    <p className="text-sm text-green-100 font-semibold mt-1">
-                                        View your performance records across all school years
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            {/* Info Button */}
-                            <button
-                                onClick={() => setShowInfoModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
-                                title="Information"
-                            >
-                                <Info className="h-5 w-5" />
-                                <span className="font-semibold">Info</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <div className="min-h-screen bg-[hsl(var(--canvas))] text-foreground">
+                <PageHeader
+                    title="IPCRF History"
+                    subtitle="Your ratings, MOVs and signed copies, school year by school year"
+                    action={
+                        <button
+                            type="button"
+                            onClick={() => setShowInfoModal(true)}
+                            className="inline-flex h-11 items-center gap-2 rounded-xl bg-white/15 px-4 text-sm font-bold text-white transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                        >
+                            <Info className="h-[18px] w-[18px]" aria-hidden="true" />
+                            Rating scale
+                        </button>
+                    }
+                />
 
-                {/* Main Content */}
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    
+                <main className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-7 sm:px-6 lg:px-12">
                     {historyData.length === 0 ? (
-                        <div className="bg-white rounded-2xl shadow-xl p-12 text-center border-2 border-gray-200">
-                            <History className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">No History Available</h3>
-                            <p className="text-gray-600">You don't have any IPCRF records yet.</p>
+                        <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-12 text-center">
+                            <History className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                            <h3 className="mb-1 text-lg font-bold text-gray-900">No History Available</h3>
+                            <p className="text-sm text-gray-500">You don't have any IPCRF records yet.</p>
                         </div>
                     ) : (
-                        <div className="space-y-6">
-                            {historyData.map((record, index) => (
-                                <div 
-                                    key={index}
-                                    className="bg-white rounded-2xl shadow-xl p-6 border-2 border-gray-200 hover:border-indigo-300 transition-all"
-                                >
-                                    {/* School Year Header */}
-                                    <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                                                <Calendar className="h-6 w-6 text-white" />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-2xl font-bold text-gray-900">
-                                                    School Year {record.school_year}
-                                                </h2>
-                                                <p className="text-sm text-gray-600">Academic Performance Record</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            {(record.rating || (record.mov_groups && record.mov_groups.length > 0)) && (
-                                                <Button
-                                                    onClick={() => generateSummary(record)}
-                                                    disabled={generatingYear === record.school_year}
-                                                    variant="outline"
-                                                    className="border-green-600 text-green-700 hover:bg-green-50"
-                                                >
-                                                    <ClipboardList className="h-4 w-4 mr-2" />
-                                                    {generatingYear === record.school_year ? 'Generating…' : 'Generate Ratings Summary'}
-                                                </Button>
-                                            )}
-                                            {record.rating && (
-                                                <div className={`px-6 py-3 rounded-xl border-2 font-bold text-lg ${getPerformanceColor(record.rating.performance_level)}`}>
-                                                    {record.rating.performance_level}
-                                                </div>
-                                            )}
-                                        </div>
+                        historyData.map((record) => {
+                            const canSummarise = record.rating || (record.mov_groups && record.mov_groups.length > 0);
+                            return (
+                                <article key={record.school_year} className="overflow-hidden rounded-2xl border border-border bg-white">
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-6 py-5">
+                                        <span className="flex flex-col gap-0.5">
+                                            <strong className="text-xl text-gray-900">SY {record.school_year}</strong>
+                                            <span className="text-[13px] text-gray-500">
+                                                Academic Performance Record
+                                                {record.rating?.submitted_at &&
+                                                    ` · rated ${new Date(record.rating.submitted_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
+                                            </span>
+                                        </span>
+                                        {canSummarise && (
+                                            <Button
+                                                onClick={() => generateSummary(record)}
+                                                disabled={generatingYear === record.school_year}
+                                                className="h-10 rounded-[10px] bg-green-700 px-4 font-bold hover:bg-green-800"
+                                            >
+                                                <ClipboardList className="mr-2 h-4 w-4" />
+                                                {generatingYear === record.school_year ? 'Generating…' : 'Generate Ratings Summary'}
+                                            </Button>
+                                        )}
                                     </div>
 
-                                    {/* Rating Information */}
-                                    {record.rating ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Star className="h-5 w-5 text-blue-600" />
-                                                    <p className="text-sm font-semibold text-blue-900">Average Rating</p>
+                                    <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3.5 px-6 py-5">
+                                        {record.rating ? (
+                                            <>
+                                                <div className="flex flex-col gap-1 rounded-xl bg-green-50 p-4">
+                                                    <span className="text-xs font-semibold text-green-800">Average rating</span>
+                                                    <strong className="text-[28px] leading-tight text-green-900">
+                                                        {record.rating.numerical_rating ? Number(record.rating.numerical_rating).toFixed(3) : 'N/A'}
+                                                    </strong>
+                                                    {record.rating.performance_level && (
+                                                        <span className={`self-start rounded-full px-2.5 py-0.5 text-xs font-bold ${getPerformanceColor(record.rating.performance_level)}`}>
+                                                            {record.rating.performance_level}
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <p className="text-3xl font-bold text-blue-600">
-                                                    {record.rating?.numerical_rating ? Number(record.rating.numerical_rating).toFixed(2) : 'N/A'}
-                                                    <span className="text-lg text-blue-500">/5.00</span>
-                                                </p>
-                                            </div>
-
-                                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-2 border-green-200">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <TrendingUp className="h-5 w-5 text-green-600" />
-                                                    <p className="text-sm font-semibold text-green-900">Total Score</p>
+                                                <div className="flex flex-col gap-1 rounded-xl border border-[#EEF2EF] bg-[hsl(var(--canvas))] p-4">
+                                                    <span className="text-xs font-semibold text-gray-500">Total score</span>
+                                                    <strong className="text-[28px] leading-tight text-gray-900">
+                                                        {record.rating.total_score ? Number(record.rating.total_score).toFixed(2) : 'N/A'}
+                                                        <span className="text-sm font-semibold text-gray-500"> / 100</span>
+                                                    </strong>
                                                 </div>
-                                                <p className="text-3xl font-bold text-green-600">
-                                                    {record.rating?.total_score ? Number(record.rating.total_score).toFixed(2) : 'N/A'}
-                                                    <span className="text-lg text-green-500">/100</span>
-                                                </p>
-                                            </div>
-
-                                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border-2 border-purple-200">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Award className="h-5 w-5 text-purple-600" />
-                                                    <p className="text-sm font-semibold text-purple-900">Status</p>
+                                                <div className="flex flex-col gap-1 rounded-xl border border-[#EEF2EF] bg-[hsl(var(--canvas))] p-4">
+                                                    <span className="text-xs font-semibold text-gray-500">Rating status</span>
+                                                    <strong className="text-lg text-gray-900">{capitalize(record.rating.status)}</strong>
+                                                    <span className="text-[13px] text-gray-500">by School Head</span>
                                                 </div>
-                                                <span className={`inline-block px-4 py-2 rounded-lg font-bold text-sm ${
-                                                    record.rating.status === 'submitted' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800'
-                                                }`}>
-                                                    {record.rating.status.charAt(0).toUpperCase() + record.rating.status.slice(1)}
-                                                </span>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col justify-center gap-1 rounded-xl border border-dashed border-gray-300 p-4">
+                                                <span className="text-xs font-semibold text-gray-500">Rating</span>
+                                                <strong className="text-base text-gray-700">Not rated yet</strong>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-gray-50 rounded-xl p-6 text-center border-2 border-gray-200 mb-6">
-                                            <p className="text-gray-600 font-semibold">No rating available for this school year</p>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {/* Submissions and Signed IPCRF */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Submissions */}
-                                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border-2 border-amber-200">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <FileText className="h-5 w-5 text-amber-600" />
-                                                <p className="text-sm font-semibold text-amber-900">MOV Submissions</p>
-                                            </div>
-                                            <p className="text-2xl font-bold text-amber-600">
-                                                {record.submissions_count} {record.submissions_count === 1 ? 'file' : 'files'}
-                                            </p>
+                                        <div className="flex flex-col gap-1 rounded-xl border border-[#EEF2EF] bg-[hsl(var(--canvas))] p-4">
+                                            <span className="text-xs font-semibold text-gray-500">MOV submissions</span>
+                                            <strong className="text-[28px] leading-tight text-gray-900">{record.submissions_count}</strong>
+                                            <span className="text-[13px] text-gray-500">{record.submissions_count === 1 ? 'file' : 'files'}</span>
                                         </div>
 
-                                        {/* Signed IPCRF */}
-                                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border-2 border-emerald-200">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <FileText className="h-5 w-5 text-emerald-600" />
-                                                <p className="text-sm font-semibold text-emerald-900">Signed IPCRF</p>
-                                            </div>
+                                        <div className="flex flex-col gap-1.5 rounded-xl bg-yellow-50 p-4">
+                                            <span className="text-xs font-semibold text-yellow-700">Signed IPCRF</span>
                                             {record.signed_ipcrf ? (
-                                                <div className="flex items-center justify-between">
-                                                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusBadge(record.signed_ipcrf.status)}`}>
-                                                        {record.signed_ipcrf.status.charAt(0).toUpperCase() + record.signed_ipcrf.status.slice(1)}
+                                                <>
+                                                    <span className={`self-start rounded-full px-2.5 py-0.5 text-xs font-bold ${getStatusBadge(record.signed_ipcrf.status)}`}>
+                                                        {capitalize(record.signed_ipcrf.status)}
                                                     </span>
                                                     <a
                                                         href={route('teacher.signed-ipcrf.document', record.signed_ipcrf.id)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="inline-flex items-center px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm"
+                                                        className="inline-flex items-center text-[13px] font-bold text-green-700 hover:underline"
                                                     >
-                                                        <Download className="h-3 w-3 mr-1" />
-                                                        View
+                                                        <Download className="mr-1 h-3.5 w-3.5" />
+                                                        Download PDF
                                                     </a>
-                                                </div>
+                                                </>
                                             ) : (
-                                                <p className="text-gray-500 text-sm">Not submitted</p>
+                                                <strong className="text-base text-yellow-900">Not submitted</strong>
                                             )}
                                         </div>
                                     </div>
-
-                                    {/* Timestamp */}
-                                    {record.rating && (
-                                        <div className="mt-4 pt-4 border-t-2 border-gray-100">
-                                            <p className="text-sm text-gray-600">
-                                                Submitted on: {new Date(record.rating.submitted_at).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                                </article>
+                            );
+                        })
                     )}
+
+                    <section className="flex flex-col gap-3 rounded-2xl border border-border bg-white px-6 py-5">
+                        <h2 className="text-base font-bold text-gray-900">Performance ratings</h2>
+                        <div className="flex flex-wrap gap-2 text-[13px] font-semibold">
+                            <span className="rounded-full bg-green-900 px-3 py-1.5 text-white">Outstanding 4.500–5.000</span>
+                            <span className="rounded-full bg-green-700 px-3 py-1.5 text-white">Very Satisfactory 3.500–4.499</span>
+                            <span className="rounded-full bg-green-100 px-3 py-1.5 text-green-800">Satisfactory 2.500–3.499</span>
+                            <span className="rounded-full bg-yellow-100 px-3 py-1.5 text-yellow-800">Unsatisfactory 1.500–2.499</span>
+                            <span className="rounded-full bg-red-100 px-3 py-1.5 text-red-800">Poor below 1.500</span>
+                        </div>
+                    </section>
                 </main>
             </div>
+
 
             {/* Info Modal */}
             {showInfoModal && (
                 <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowInfoModal(false)}>
                     <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 rounded-t-2xl">
+                        <div className="bg-sidebar px-6 py-4 rounded-t-2xl">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-2xl font-bold text-white flex items-center gap-2">
                                     <Info className="h-6 w-6" />
@@ -347,7 +290,7 @@ export default function IpcrfHistory({ historyData, user }) {
                         </div>
 
                         <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end">
-                            <Button onClick={() => setShowInfoModal(false)} className="bg-green-600 hover:bg-green-700">
+                            <Button onClick={() => setShowInfoModal(false)} className="bg-green-700 hover:bg-green-800">
                                 Got it!
                             </Button>
                         </div>
